@@ -1,0 +1,16 @@
+# Secrets (contains passwords)
+secrets.h
+
+# ESPHome build artifacts
+.esphome/
+.claude
+
+# macOS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+
+# RCS
+.rcs/
