@@ -4,8 +4,8 @@ ESPHome-based controller for Liftmaster garage door openers using a Canaduino PL
 
 ## Hardware
 
-- **Controller**: [Canaduino PLC](https://www.amazon.com/dp/B08H7YR72Y) with Arduino Nano ESP32
-- **Remote**: Liftmaster 4-button remote (893MAX or similar) - relay contacts soldered to button pads
+- **Controller**: [Canaduino MEGA328 PLC](https://www.universal-solder.ca/product/canaduino-mega328-plc-100-v2-smd-for-arduino-nano/) with Arduino Nano ESP32
+- **Remote**: [Liftmaster 4-button remote](https://www.amazon.com/dp/B08H7YR72Y) - relay contacts soldered to button pads
 - **Temperature Sensor**: DS18B20 on 1-Wire bus (GPIO 11 / Canaduino SDA/A4 terminal)
 
 ## Features
