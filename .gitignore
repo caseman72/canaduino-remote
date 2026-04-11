@@ -1,8 +1,22 @@
 # Secrets (contains passwords)
 secrets.h
+**/secrets.h
 
 # ESPHome build artifacts
 .esphome/
+
+# ESP-IDF build artifacts
+build/
+managed_components/
+dependencies.lock
+sdkconfig
+sdkconfig.old
+.cache/
+
+# Monitor logs
+*.log
+
+# Claude
 .claude
 
 # macOS

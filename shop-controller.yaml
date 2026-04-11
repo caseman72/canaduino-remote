@@ -1,0 +1,371 @@
+substitutions:
+  pulse_duration: "503ms"  # Oregon area code
+
+  # Secrets - override via shop-upload.sh
+  wifi_primary_ssid: "PLACEHOLDER"
+  wifi_primary_password: "PLACEHOLDER"
+  wifi_secondary_ssid: "PLACEHOLDER"
+  wifi_secondary_password: "PLACEHOLDER"
+  mqtt_broker: "PLACEHOLDER"
+  mqtt_username: "PLACEHOLDER"
+  mqtt_password: "PLACEHOLDER"
+  ota_password: "PLACEHOLDER"
+
+esphome:
+  name: shop-controller
+  friendly_name: Shop Controller
+  on_boot:
+    priority: 599
+    then:
+      - lambda: |-
+          ESP_LOGW("boot", "use_secondary_network = %s", id(use_secondary_network) ? "TRUE" : "FALSE");
+          if (id(use_secondary_network)) {
+            ESP_LOGW("boot", "SWITCHING to secondary: ${wifi_secondary_ssid}");
+            wifi::WiFiAP ap;
+            ap.set_ssid("${wifi_secondary_ssid}");
+            ap.set_password("${wifi_secondary_password}");
+            wifi::global_wifi_component->set_sta(ap);
+          } else {
+            ESP_LOGW("boot", "Using primary: ${wifi_primary_ssid}");
+          }
+
+esp32:
+  board: esp32-c6-devkitc-1
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_LOG_COLORS: "n"
+
+wifi:
+  ssid: ${wifi_primary_ssid}
+  password: ${wifi_primary_password}
+  fast_connect: true
+  reboot_timeout: 15min
+
+mqtt:
+  broker: ${mqtt_broker}
+  port: 8883
+  username: ${mqtt_username}
+  password: ${mqtt_password}
+  discovery: true
+  discovery_prefix: homeassistant
+  discovery_unique_id_generator: mac
+  topic_prefix: shop-controller
+  idf_send_async: true
+  log_topic: shop-controller/logs
+  reboot_timeout: 15min
+  on_connect:
+    - logger.log: "MQTT Connected!"
+  on_disconnect:
+    - logger.log: "MQTT Disconnected!"
+  on_json_message:
+    - topic: zigbee/shop_1_sensor
+      then:
+        - lambda: |-
+            if (x["contact"].is<bool>()) {
+              id(shop_1_contact) = x["contact"].as<bool>();
+            }
+    - topic: zigbee/shop_2_sensor
+      then:
+        - lambda: |-
+            if (x["contact"].is<bool>()) {
+              id(shop_2_contact) = x["contact"].as<bool>();
+            }
+    - topic: zigbee/shop_3_sensor
+      then:
+        - lambda: |-
+            if (x["contact"].is<bool>()) {
+              id(shop_3_contact) = x["contact"].as<bool>();
+            }
+    - topic: zigbee/shop_4_sensor
+      then:
+        - lambda: |-
+            if (x["contact"].is<bool>()) {
+              id(shop_4_contact) = x["contact"].as<bool>();
+            }
+    - topic: zigbee/barn_sensor
+      then:
+        - lambda: |-
+            if (x["contact"].is<bool>()) {
+              id(barn_contact) = x["contact"].as<bool>();
+            }
+  certificate_authority: |
+    -----BEGIN CERTIFICATE-----
+    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
+    -----END CERTIFICATE-----
+
+ota:
+  platform: esphome
+  password: ${ota_password}
+
+logger:
+  level: INFO
+  hardware_uart: USB_SERIAL_JTAG
+
+# State tracking
+globals:
+  - id: use_secondary_network
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  # Zigbee tilt sensor contact state (true = closed, false = open)
+  - id: shop_1_contact
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+  - id: shop_2_contact
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+  - id: shop_3_contact
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+  - id: shop_4_contact
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+  - id: barn_contact
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+
+# 1-Wire bus for DS18B20 temperature sensor
+# Wiring: GPIO6 (data), 3V3 (VCC), GND
+# 4.7kΩ pull-up built into harness
+one_wire:
+  - platform: gpio
+    pin: 6
+
+# Relay outputs - internal (controlled by covers)
+# ESP32-C6-DevKitC-1: GPIO0, GPIO1, GPIO10, GPIO4 (left side)
+switch:
+  - platform: gpio
+    pin:
+      number: 0
+      inverted: true
+    id: relay_shop_2
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin:
+      number: 1
+      inverted: true
+    id: relay_shop_3
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin:
+      number: 10
+      inverted: true
+    id: relay_shop_4
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin:
+      number: 5
+      inverted: true
+    id: relay_barn
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+# Cover entities - state from Zigbee tilt sensors via Z2M MQTT
+cover:
+  - platform: template
+    name: "Shop Door 1"
+    id: cover_shop_1
+    device_class: garage
+    icon: "mdi:garage"
+    lambda: 'return id(shop_1_contact) ? COVER_CLOSED : COVER_OPEN;'
+    close_action:
+      - logger.log: "Shop Door 1 close requested — forwarding to myq-mcp"
+      - mqtt.publish:
+          topic: myq/shop1/command
+          payload: "close"
+
+  - platform: template
+    name: "Shop Door 2"
+    id: cover_shop_2
+    device_class: garage
+    icon: "mdi:garage"
+    lambda: 'return id(shop_2_contact) ? COVER_CLOSED : COVER_OPEN;'
+    open_action:
+      - logger.log: "Shop Door 2 open/toggle"
+      - switch.turn_on: relay_shop_2
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop_2
+    close_action:
+      - logger.log: "Shop Door 2 close/toggle"
+      - switch.turn_on: relay_shop_2
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop_2
+    stop_action:
+      - logger.log: "Shop Door 2 stop/toggle"
+      - switch.turn_on: relay_shop_2
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop_2
+
+  - platform: template
+    name: "Shop Door 3"
+    id: cover_shop_3
+    device_class: garage
+    icon: "mdi:garage"
+    lambda: 'return id(shop_3_contact) ? COVER_CLOSED : COVER_OPEN;'
+    open_action:
+      - logger.log: "Shop Door 3 open/toggle"
+      - switch.turn_on: relay_shop_3
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop_3
+    close_action:
+      - logger.log: "Shop Door 3 close/toggle"
+      - switch.turn_on: relay_shop_3
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop_3
+    stop_action:
+      - logger.log: "Shop Door 3 stop/toggle"
+      - switch.turn_on: relay_shop_3
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop_3
+
+  - platform: template
+    name: "Shop Door 4"
+    id: cover_shop_4
+    device_class: garage
+    icon: "mdi:garage"
+    lambda: 'return id(shop_4_contact) ? COVER_CLOSED : COVER_OPEN;'
+    open_action:
+      - logger.log: "Shop Door 4 open/toggle"
+      - switch.turn_on: relay_shop_4
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop_4
+    close_action:
+      - logger.log: "Shop Door 4 close/toggle"
+      - switch.turn_on: relay_shop_4
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop_4
+    stop_action:
+      - logger.log: "Shop Door 4 stop/toggle"
+      - switch.turn_on: relay_shop_4
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop_4
+
+  - platform: template
+    name: "Barn Door"
+    id: cover_barn
+    device_class: garage
+    icon: "mdi:barn"
+    lambda: 'return id(barn_contact) ? COVER_CLOSED : COVER_OPEN;'
+    open_action:
+      - logger.log: "Barn Door open/toggle"
+      - switch.turn_on: relay_barn
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_barn
+    close_action:
+      - logger.log: "Barn Door close/toggle"
+      - switch.turn_on: relay_barn
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_barn
+    stop_action:
+      - logger.log: "Barn Door stop/toggle"
+      - switch.turn_on: relay_barn
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_barn
+
+# Utility buttons
+button:
+  - platform: template
+    name: "Switch Network"
+    id: btn_switch_network
+    icon: "mdi:wifi-sync"
+    on_press:
+      - script.execute: switch_network
+
+  - platform: template
+    name: "Restart"
+    id: btn_restart
+    icon: "mdi:restart"
+    on_press:
+      - logger.log: "Restart requested"
+      - delay: 500ms
+      - lambda: 'App.safe_reboot();'
+
+# Diagnostics
+sensor:
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    id: wifi_rssi
+    update_interval: 60s
+    icon: "mdi:wifi"
+
+  - platform: dallas_temp
+    name: "Panel Temperature"
+    id: panel_temp
+    index: 0
+    update_interval: 60s
+    icon: "mdi:thermometer"
+    filters:
+      - lambda: return x * 9.0 / 5.0 + 32.0;
+    unit_of_measurement: "°F"
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      id: wifi_ip
+      icon: "mdi:ip-network"
+
+  - platform: wifi_info
+    ssid:
+      name: "WiFi Network"
+      id: wifi_network
+      icon: "mdi:wifi-cog"
+
+# Scripts
+script:
+  - id: switch_network
+    then:
+      - lambda: |-
+          id(use_secondary_network) = !id(use_secondary_network);
+          if (id(use_secondary_network)) {
+            ESP_LOGI("wifi", "Switching to ${wifi_secondary_ssid} - will restart");
+          } else {
+            ESP_LOGI("wifi", "Switching to ${wifi_primary_ssid} - will restart");
+          }
+      - delay: 500ms
+      - lambda: 'App.safe_reboot();'
