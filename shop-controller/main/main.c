@@ -6,6 +6,8 @@
 #include "wifi.h"
 #include "mqtt.h"
 #include "zigbee.h"
+#include "temp.h"
+#include "ota.h"
 
 static const char *TAG = "main";
 
@@ -35,12 +37,18 @@ void app_main(void)
      *    Zigbee radio contention makes TLS handshakes unreliable. */
     ESP_LOGI(TAG, "Waiting for MQTT connection before starting Zigbee...");
     if (mqtt_wait_connected(30000)) {
-        ESP_LOGI(TAG, "MQTT connected — starting Zigbee coordinator");
+        ESP_LOGI(TAG, "MQTT connected");
     } else {
         ESP_LOGW(TAG, "MQTT timeout — starting Zigbee anyway");
     }
 
-    /* 5. Zigbee coordinator — runs in its own task */
+    /* 5. OTA server — start before Zigbee so it's always available */
+    ota_init();
+
+    /* 6. Temperature sensor */
+    temp_init();
+
+    /* 7. Zigbee coordinator — runs in its own task */
     zigbee_init();
 
     ESP_LOGI(TAG, "=== All subsystems initialized ===");

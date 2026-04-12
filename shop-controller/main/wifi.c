@@ -25,7 +25,9 @@ static void event_handler(void *arg, esp_event_base_t base,
     if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGW(TAG, "Disconnected -- reconnecting");
+        wifi_event_sta_disconnected_t *d = (wifi_event_sta_disconnected_t *)data;
+        ESP_LOGW(TAG, "Disconnected (reason=%d) -- reconnecting", d->reason);
+        vTaskDelay(pdMS_TO_TICKS(500));  /* brief delay before retry */
         esp_wifi_connect();
     } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *e = (ip_event_got_ip_t *)data;
@@ -94,6 +96,7 @@ void wifi_init(void)
         .sta = {
             .ssid     = WIFI_SSID,
             .password = WIFI_PASSWORD,
+            .channel  = 4,           /* skip scan — farmland is always ch4 */
         },
     };
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));

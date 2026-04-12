@@ -11,19 +11,21 @@ ESP32-C6-DevKitC-1 running as Zigbee coordinator + WiFi/MQTT gateway for 5 garag
 - **Board**: ESP32-C6-DevKitC-1 (RISC-V, WiFi + Zigbee)
 - **Relay Board**: 4-channel opto-isolated relay module (active-LOW)
 - **Sensors**: 5x Third Reality Zigbee tilt sensors (IAS Zone)
-- **Temperature**: DS18B20 on 1-Wire (GPIO 6)
+- **Temperature**: DS18B20 on 1-Wire (GPIO 11)
 
 ### Features
 
 - Zigbee coordinator — pairs tilt sensors directly (no external Z2M needed)
 - 5 HA cover entities via MQTT discovery
-  - Shop Door 1 (no relay — close-only via myq-mcp/IFTTT)
-  - Shop Door 2 (GPIO 0 → Relay IN2)
-  - Shop Door 3 (GPIO 1 → Relay IN3)
-  - Shop Door 4 (GPIO 10 → Relay IN4)
-  - Barn Door (GPIO 5 → Relay IN1)
+  - Shop Door 1 (GPIO 4 → Relay)
+  - Shop Door 2 (GPIO 0 → Relay)
+  - Shop Door 3 (GPIO 1 → Relay)
+  - Shop Door 4 (GPIO 10 → Relay)
+  - Barn Door (GPIO 5 → Relay)
 - WiFi/Zigbee coexistence (MQTT TLS connects before Zigbee starts)
-- Sensor auto-pairing with NVS persistence
+- Hardcoded sensor IEEE → door mappings with NVS fallback for auto-pairing
+- DS18B20 panel temperature (60s updates, Fahrenheit)
+- HTTP OTA firmware updates on port 8080
 - WiFi diagnostics (IP, SSID, RSSI every 30s)
 - 503ms relay pulse duration
 
@@ -48,6 +50,7 @@ Pairing commands:
    idf.py -p /dev/cu.usbmodem11201 flash
    ```
 4. Monitor: `./shop-controller/monitor.sh`
+5. OTA updates: `curl -X POST --data-binary @build/shop-controller.bin http://<ip>:8080/upload`
 
 ---
 

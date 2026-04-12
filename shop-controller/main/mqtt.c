@@ -95,13 +95,6 @@ void mqtt_publish_all_states(void)
     }
 }
 
-void mqtt_close_shop1(void)
-{
-    if (!s_client) return;
-    esp_mqtt_client_publish(s_client, MYQ_SHOP1_CMD_TOPIC, "close", 0, 1, 0);
-    ESP_LOGI(TAG, "Shop Door 1 close → myq-mcp");
-}
-
 void mqtt_publish_sensor_battery(int door_index, int battery_pct)
 {
     if (!s_client || door_index < 0 || door_index >= NUM_DOORS) return;
@@ -160,17 +153,7 @@ static void handle_command(const char *topic, int topic_len,
         if (topic_len == (int)strlen(expected) &&
             strncmp(topic, expected, topic_len) == 0) {
 
-            /* Shop Door 1: close-only, forward to myq-mcp */
-            if (DOORS[i].close_only) {
-                if (data_len >= 5 && strncasecmp(data, "CLOSE", 5) == 0) {
-                    mqtt_close_shop1();
-                } else {
-                    ESP_LOGW(TAG, "%s: only CLOSE supported", DOORS[i].name);
-                }
-                return;
-            }
-
-            /* Doors 2–4 + Barn: all commands pulse the relay (toggle door) */
+            /* All doors: any command pulses the relay (toggle door) */
             ESP_LOGI(TAG, "%s: command %.*s → pulse relay",
                      DOORS[i].name, data_len, data);
             relay_pulse(i);
@@ -304,4 +287,9 @@ bool mqtt_wait_connected(int timeout_ms)
         MQTT_CONNECTED_BIT, false, true,
         pdMS_TO_TICKS(timeout_ms));
     return (bits & MQTT_CONNECTED_BIT) != 0;
+}
+
+esp_mqtt_client_handle_t mqtt_get_client(void)
+{
+    return s_client;
 }

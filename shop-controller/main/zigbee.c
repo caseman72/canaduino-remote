@@ -43,21 +43,50 @@ static void save_sensor_map(void)
     ESP_LOGI(TAG, "Sensor map saved to NVS");
 }
 
+static const uint8_t HARDCODED_IEEE[NUM_DOORS][8] = {
+    SENSOR_IEEE_SHOP_1,
+    SENSOR_IEEE_SHOP_2,
+    SENSOR_IEEE_SHOP_3,
+    SENSOR_IEEE_SHOP_4,
+    SENSOR_IEEE_BARN,
+};
+
+static bool is_zero_ieee(const uint8_t *ieee)
+{
+    for (int i = 0; i < 8; i++) {
+        if (ieee[i] != 0) return false;
+    }
+    return true;
+}
+
 static void load_sensor_map(void)
 {
-    nvs_handle_t h;
-    if (nvs_open(NVS_NAMESPACE, NVS_READONLY, &h) != ESP_OK) {
-        ESP_LOGI(TAG, "No saved sensor map — starting fresh");
-        return;
+    /* Load hardcoded mappings first */
+    for (int i = 0; i < NUM_DOORS; i++) {
+        if (!is_zero_ieee(HARDCODED_IEEE[i])) {
+            memcpy(s_sensors[i].ieee, HARDCODED_IEEE[i], sizeof(esp_zb_ieee_addr_t));
+            s_sensors[i].assigned = true;
+            ESP_LOGI(TAG, "Hardcoded sensor %d -> %s: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+                     i, DOORS[i].id,
+                     s_sensors[i].ieee[7], s_sensors[i].ieee[6],
+                     s_sensors[i].ieee[5], s_sensors[i].ieee[4],
+                     s_sensors[i].ieee[3], s_sensors[i].ieee[2],
+                     s_sensors[i].ieee[1], s_sensors[i].ieee[0]);
+        }
     }
 
+    /* Then fill remaining from NVS (auto-paired sensors) */
+    nvs_handle_t h;
+    if (nvs_open(NVS_NAMESPACE, NVS_READONLY, &h) != ESP_OK) return;
+
     for (int i = 0; i < NUM_DOORS; i++) {
+        if (s_sensors[i].assigned) continue; /* skip hardcoded */
         char key[12];
         snprintf(key, sizeof(key), "sensor_%d", i);
         size_t len = sizeof(esp_zb_ieee_addr_t);
         if (nvs_get_blob(h, key, s_sensors[i].ieee, &len) == ESP_OK) {
             s_sensors[i].assigned = true;
-            ESP_LOGI(TAG, "Loaded sensor %d -> %s: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+            ESP_LOGI(TAG, "NVS sensor %d -> %s: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
                      i, DOORS[i].id,
                      s_sensors[i].ieee[7], s_sensors[i].ieee[6],
                      s_sensors[i].ieee[5], s_sensors[i].ieee[4],

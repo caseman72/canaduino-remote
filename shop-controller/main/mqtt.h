@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include "mqtt_client.h"
 
 /* Initialize MQTT client (TLS) and connect to broker.
  * Publishes LWT, HA cover discovery, and subscribes to command topics. */
@@ -16,8 +17,8 @@ void mqtt_publish_door_state(int door_index, bool closed);
 /* Publish all current door states (call on reconnect). */
 void mqtt_publish_all_states(void);
 
-/* Publish to myq/shop1/command to close Shop Door 1 via IFTTT. */
-void mqtt_close_shop1(void);
-
 /* Forward-declared so zigbee.c can trigger state publishes. */
 void mqtt_publish_sensor_battery(int door_index, int battery_pct);
+
+/* Get the MQTT client handle (for temp.c etc). Returns NULL if not connected. */
+esp_mqtt_client_handle_t mqtt_get_client(void);
