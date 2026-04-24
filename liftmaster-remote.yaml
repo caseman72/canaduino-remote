@@ -1,5 +1,5 @@
 substitutions:
-  pulse_duration: "503ms"  # Oregon area code
+  pulse_duration: "720ms"
 
   # Secrets - override via upload.sh
   wifi_primary_ssid: "PLACEHOLDER"
@@ -114,8 +114,14 @@ one_wire:
     pin: 11  # Canaduino SDA/A4 = GPIO 11
 
 # Relay outputs - internal (controlled by buttons)
-# Arduino Nano ESP32: D2=GPIO5, D3=GPIO6, D4=GPIO7, D5=GPIO8
+# Arduino Nano ESP32: D2=GPIO5, D3=GPIO6, D4=GPIO7, D5=GPIO8, A3=GPIO4
 switch:
+  - platform: gpio
+    pin: 4
+    id: relay_shop1
+    internal: true
+    restore_mode: ALWAYS_OFF
+
   - platform: gpio
     pin: 5
     id: relay_shop2
@@ -142,6 +148,16 @@ switch:
 
 # MQTT buttons for Home Assistant
 button:
+  - platform: template
+    name: "Shop Door 1"
+    id: btn_shop1
+    icon: "mdi:garage"
+    on_press:
+      - logger.log: "Shop Door 1 pressed"
+      - switch.turn_on: relay_shop1
+      - delay: ${pulse_duration}
+      - switch.turn_off: relay_shop1
+
   - platform: template
     name: "Shop Door 2"
     id: btn_shop2

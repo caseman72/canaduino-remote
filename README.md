@@ -66,12 +66,13 @@ ESPHome-based controller for Liftmaster garage door openers using a Canaduino PL
 
 ### Features
 
-- 4 garage door buttons via MQTT for Home Assistant
+- 5 garage door buttons via MQTT for Home Assistant
+  - Shop Door 1 (Relay 6 / A3 / GPIO 4)
   - Shop Door 2 (Relay 1 / D2 / GPIO 5)
   - Shop Door 3 (Relay 2 / D3 / GPIO 6)
   - Shop Door 4 (Relay 3 / D4 / GPIO 7)
   - Barn Door (Relay 4 / D5 / GPIO 8)
-- 503ms pulse duration (Oregon area code)
+- 720ms pulse duration
 - Dual WiFi network support with runtime switching
 - Panel temperature monitoring (DS18B20)
 - WiFi diagnostics (RSSI, IP, connected SSID)
@@ -95,6 +96,7 @@ Connects to HiveMQ Cloud via TLS (port 8883). Topic prefix: `liftmaster`
 | 2 | D3 | D3 | 6 | Shop Door 3 |
 | 3 | D4 | D4 | 7 | Shop Door 4 |
 | 4 | D5 | D5 | 8 | Barn Door |
+| 6 | A3 | A3 | 4 | Shop Door 1 |
 
 #### DS18B20 Temperature Sensor
 | Wire | Canaduino Terminal | Notes |

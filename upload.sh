@@ -1,6 +1,10 @@
 #!/bin/bash
 # OTA upload script for liftmaster-remote
 #
+# Splits compile + upload because PlatformIO's espressif32 platform blocks
+# Python 3.14 (used by Homebrew esphome). The compile step tolerates it but
+# the upload step re-runs the version check and aborts — so we compile with
+# esphome, then upload the built firmware.ota.bin via esphome.espota2 directly.
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -13,7 +17,6 @@ if [[ ! -f "$SCRIPT_DIR/$SECRETS" ]]; then
     exit 1
 fi
 
-# Parse secrets file and extract value
 parse_secret() {
     grep "#define $1 " "$SCRIPT_DIR/$SECRETS" | sed 's/.*"\(.*\)"/\1/'
 }
@@ -27,8 +30,12 @@ MQTT_USERNAME=$(parse_secret MQTT_USERNAME)
 MQTT_PASSWORD=$(parse_secret MQTT_PASSWORD)
 OTA_PASSWORD=$(parse_secret OTA_PASSWORD)
 
-echo "Uploading to $DEVICE..."
+CONFIG_NAME="${CONFIG%.yaml}"
+FIRMWARE="$SCRIPT_DIR/.esphome/build/$CONFIG_NAME/.pioenvs/$CONFIG_NAME/firmware.ota.bin"
+
 cd "$SCRIPT_DIR"
+
+echo "Compiling $CONFIG..."
 esphome \
     -s wifi_primary_ssid "$WIFI_PRIMARY_SSID" \
     -s wifi_primary_password "$WIFI_PRIMARY_PASSWORD" \
@@ -38,4 +45,23 @@ esphome \
     -s mqtt_username "$MQTT_USERNAME" \
     -s mqtt_password "$MQTT_PASSWORD" \
     -s ota_password "$OTA_PASSWORD" \
-    run "$CONFIG" --no-logs --device "$DEVICE"
+    compile "$CONFIG"
+
+if [[ ! -f "$FIRMWARE" ]]; then
+    echo "Error: firmware not found at $FIRMWARE"
+    exit 1
+fi
+
+echo "Uploading to $DEVICE via OTA..."
+ESPHOME_PY="$(head -1 "$(command -v esphome)" | sed 's|^#!||')"
+OTA_PASSWORD="$OTA_PASSWORD" DEVICE="$DEVICE" FIRMWARE="$FIRMWARE" \
+"$ESPHOME_PY" - <<'PY'
+import os, sys
+from pathlib import Path
+from esphome.espota2 import run_ota
+rc, host = run_ota(os.environ["DEVICE"], 3232, os.environ["OTA_PASSWORD"], Path(os.environ["FIRMWARE"]))
+if rc != 0:
+    print(f"OTA failed (rc={rc})", file=sys.stderr)
+    sys.exit(rc)
+print(f"OTA complete — device at {host}")
+PY
