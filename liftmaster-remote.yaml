@@ -2,10 +2,8 @@ substitutions:
   pulse_duration: "720ms"
 
   # Secrets - override via upload.sh
-  wifi_primary_ssid: "PLACEHOLDER"
-  wifi_primary_password: "PLACEHOLDER"
-  wifi_secondary_ssid: "PLACEHOLDER"
-  wifi_secondary_password: "PLACEHOLDER"
+  wifi_ssid: "PLACEHOLDER"
+  wifi_password: "PLACEHOLDER"
   mqtt_broker: "PLACEHOLDER"
   mqtt_username: "PLACEHOLDER"
   mqtt_password: "PLACEHOLDER"
@@ -14,20 +12,6 @@ substitutions:
 esphome:
   name: liftmaster-remote
   friendly_name: Liftmaster Remote
-  on_boot:
-    priority: 599
-    then:
-      - lambda: |-
-          ESP_LOGW("boot", "use_secondary_network = %s", id(use_secondary_network) ? "TRUE" : "FALSE");
-          if (id(use_secondary_network)) {
-            ESP_LOGW("boot", "SWITCHING to secondary: ${wifi_secondary_ssid}");
-            wifi::WiFiAP ap;
-            ap.set_ssid("${wifi_secondary_ssid}");
-            ap.set_password("${wifi_secondary_password}");
-            wifi::global_wifi_component->set_sta(ap);
-          } else {
-            ESP_LOGW("boot", "Using primary: ${wifi_primary_ssid}");
-          }
 
 esp32:
   board: arduino_nano_esp32
@@ -37,9 +21,8 @@ esp32:
       CONFIG_LOG_COLORS: "n"
 
 wifi:
-  ssid: ${wifi_primary_ssid}
-  password: ${wifi_primary_password}
-  fast_connect: true
+  ssid: ${wifi_ssid}
+  password: ${wifi_password}
   reboot_timeout: 15min
 
 mqtt:
@@ -65,13 +48,6 @@ ota:
 
 logger:
   level: INFO
-
-# State tracking
-globals:
-  - id: use_secondary_network
-    type: bool
-    restore_value: yes
-    initial_value: 'false'
 
 # 1-Wire bus for DS18B20 temperature sensor
 # Wiring: SDA/A4 terminal (data), 5V (VCC), GND
@@ -167,13 +143,6 @@ button:
       - switch.turn_off: relay_barn
 
   - platform: template
-    name: "P3 Button - Switch Network"
-    id: btn_switch_network
-    icon: "mdi:wifi-sync"
-    on_press:
-      - script.execute: switch_network
-
-  - platform: template
     name: "P5 Button - Restart"
     id: btn_restart
     icon: "mdi:restart"
@@ -212,17 +181,3 @@ text_sensor:
       name: "WiFi Network"
       id: wifi_network
       icon: "mdi:wifi-cog"
-
-# Scripts
-script:
-  - id: switch_network
-    then:
-      - lambda: |-
-          id(use_secondary_network) = !id(use_secondary_network);
-          if (id(use_secondary_network)) {
-            ESP_LOGI("wifi", "Switching to ${wifi_secondary_ssid} - will restart");
-          } else {
-            ESP_LOGI("wifi", "Switching to ${wifi_primary_ssid} - will restart");
-          }
-      - delay: 500ms
-      - lambda: 'App.safe_reboot();'
