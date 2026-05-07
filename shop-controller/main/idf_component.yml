@@ -1,9 +1,0 @@
-dependencies:
-  espressif/esp-zigbee-lib:
-    version: ">=1.0.0"
-  espressif/esp-zboss-lib:
-    version: ">=1.0.0"
-  espressif/ds18b20:
-    version: ">=0.3.0"
-  espressif/onewire_bus:
-    version: ">=1.1.0"

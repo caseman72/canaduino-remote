@@ -30,3 +30,5 @@ sdkconfig.old
 .rcs/
 
 *.bak.*
+
+c6-shop-controller.zip
