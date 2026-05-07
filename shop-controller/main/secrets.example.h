@@ -6,6 +6,6 @@
 #define WIFI_SSID       "your_ssid"
 #define WIFI_PASSWORD   "your_password"
 
-#define MQTT_BROKER_URI "mqtts://your-cluster.s1.eu.hivemq.cloud:8883"
+#define MQTT_BROKER_URI "mqtt://your_broker"
 #define MQTT_USERNAME   "your_user"
 #define MQTT_PASSWORD   "your_password"
