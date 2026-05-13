@@ -1,5 +1,6 @@
 substitutions:
-  pulse_duration: "720ms"
+  pulse_duration: "840ms"
+  barn_pulse_duration: "1500ms"
 
   # Secrets - override via upload.sh
   wifi_ssid: "PLACEHOLDER"
@@ -139,7 +140,7 @@ button:
     on_press:
       - logger.log: "Barn Door pressed"
       - switch.turn_on: relay_barn
-      - delay: ${pulse_duration}
+      - delay: ${barn_pulse_duration}
       - switch.turn_off: relay_barn
 
   - platform: template

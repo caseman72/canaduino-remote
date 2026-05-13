@@ -72,7 +72,7 @@ ESPHome-based controller for Liftmaster garage door openers using a Canaduino PL
   - Shop Door 3 (Relay 2 / D3 / GPIO 6)
   - Shop Door 4 (Relay 3 / D4 / GPIO 7)
   - Barn Door (Relay 4 / D5 / GPIO 8)
-- 720ms pulse duration
+- Pulse duration: 840ms (shop doors) / 1500ms (barn door)
 - Panel temperature monitoring (DS18B20)
 - WiFi diagnostics (RSSI, IP, connected SSID)
 
